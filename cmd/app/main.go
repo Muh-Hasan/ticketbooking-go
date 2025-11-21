@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"ticketbooking/internal/booking"
 )
+
+var wg = sync.WaitGroup{}
 
 func main() {
 	fmt.Println("Ticket Booking CLI")
@@ -88,6 +91,8 @@ func main() {
 		fmt.Printf("Thank you %s %s for booking %d tickets. A confirmation email will be sent to %s.\n",
 			firstName, lastName, tickets, email)
 
+		wg.Add(1)
+		go booking.SendTicket(tickets, firstName, lastName, email, &wg)
 		fmt.Println("Remaining Tickets:", booking.RemainingTickets)
 
 		if booking.RemainingTickets == 0 {
@@ -98,9 +103,11 @@ func main() {
 		fmt.Print("Do you want to add more bookings? (y/n): ")
 		fmt.Scan(&choice)
 	}
+
 	for _, b := range booking.Bookings {
 		fmt.Printf("Booking ID %d: %s %s booked %d tickets\n",
 			b.ID, b.FirstName, b.LastName, b.Tickets)
 	}
 
+	wg.Wait()
 }
